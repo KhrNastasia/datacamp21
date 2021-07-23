@@ -1,0 +1,139 @@
+drop table DIM_date;
+drop index idx_dim_date;
+/*==============================================================*/
+/* Table: DIM_date                                            */
+/*==============================================================*/
+create table DIM_date (
+  DATE_KEY NUMBER,
+  FULL_NUMBER VARCHAR2(20),
+  FULL_STRING VARCHAR2(50),
+  WEEKDAY_FL NUMBER,
+  LAST_DAY_OF_WEEK_FL NUMBER,
+  LAST_DAY_OF_MONTH_FL NUMBER,
+  LAST_DAY_OF_QTR_FL NUMBER,
+  LAST_DAY_OF_YR_FL NUMBER,
+  DAY_OF_WEEK_NAME VARCHAR2(20),
+  DAY_OF_WEEK_ABBR VARCHAR2(20),
+  MONTH_NAME VARCHAR2(20),
+  MONTH_NAME_ABBR VARCHAR2(20),
+  DAY_NUMBER_OF_WEEK NUMBER,
+  DAY_NUMBER_OF_MONTH NUMBER,
+  DAY_NUMBER_OF_QTR NUMBER,
+  DAY_NUMBER_OF_YR NUMBER,
+  WEEK_NUMBER_OF_MONTH NUMBER,
+  WEEK_NUMBER_OF_QTR NUMBER,
+  WEEK_NUMBER_OF_YR NUMBER,
+  MONTH_NUMBER_OF_YR NUMBER,
+  QTR_NUMBER_OF_YR NUMBER,
+  YEAR_NUMBER NUMBER,
+  WEEK_BEGIN_DT DATE,
+  WEEK_END_DT DATE,
+  MONTH_BEGIN_DT DATE,
+  MONTH_END_DT DATE,
+  QTR_BEGIN_DT DATE,
+  QTR_END_DT DATE,
+  YR_BEGIN_DT DATE,
+  YR_END_DT DATE,
+  CONSTRAINT PK_DIM_DATE PRIMARY KEY (DATE_KEY)
+);
+CREATE INDEX idx_dim_date_01 ON dim_date(SUBSTR(DATE_KEY,5,4))NOLOGGING COMPUTE STATISTICS;
+
+
+INSERT INTO DIM_date
+SELECT 
+    to_number(to_char(mydate, 'yyyymmdd')) DATE_KEY,
+    to_char(mydate, 'yyyy-mm-dd') FULL_NUMBER,
+    to_char(mydate, 'fmMonth dd, yyyy') FULL_STRING,
+        case
+            when to_number(to_char(mydate, 'D')) in (6, 7)  
+            then 0
+            else 1
+        end WEEKDAY_FL,
+
+        case
+            when to_char(mydate, 'fmDay') = 'Saturday'
+            then 1
+            else 0
+        end LAST_DAY_OF_WEEK_FL,
+        
+        case
+            when mydate = last_day(trunc(mydate,'MM'))
+            then 1
+            else 0
+        end LAST_DAY_OF_MONTH_FL,
+        
+        case to_number(to_char(mydate, 'mmdd'))
+            when 331 then 1
+            when 630 then 1
+            when 930 then 1
+            when 1231 then 1
+            else 0
+        end LAST_DAY_OF_QTR_FL,
+        
+        decode
+            (to_number(to_char(mydate, 'mmdd')),1231,1,0) LAST_DAY_OF_YR_FL,
+            to_char(mydate, 'fmDay') DAY_OF_WEEK_NAME,
+            to_char(mydate, 'fmDy') DAY_OF_WEEK_ABBR,
+            to_char(mydate,'fmMonth') MONTH_NAME,
+            to_char(mydate,'Mon') MONTH_NAME_ABBR,
+            
+            case to_number(to_char(mydate, 'D'))
+                when 7 then 1
+                else to_number(to_char(mydate, 'D')) + 1
+            end DAY_NUMBER_OF_WEEK,
+            
+            to_number(to_char(mydate, 'DD')) DAY_NUMBER_OF_MONTH,
+            trunc(mydate) - trunc(mydate,'Q') + 1 DAY_NUMBER_OF_QTR,
+            to_number(to_char(mydate,'ddd')) DAY_NUMBER_OF_YR,
+            to_number(to_char(mydate,'W')) WEEK_NUMBER_OF_MONTH,
+            (7 + TRUNC(mydate + 1,'IW') - TRUNC(TRUNC(mydate,'Q')+1,'IW'))/7 WEEK_NUMBER_OF_QTR,
+            
+            case
+                when TO_CHAR(mydate,'D') < TO_CHAR(TO_DATE(to_char(mydate,'yyyy')||'0101' ,'YYYYMMDD'),'D') 
+                    THEN TO_CHAR(mydate,'WW') + 1 ELSE TO_CHAR(mydate,'WW') + 0 
+            end WEEK_NUMBER_OF_YR,
+            
+            to_number(to_char(mydate,'mm')) MONTH_NUMBER_OF_YR,
+            to_number(to_char(mydate,'Q')) QTR_NUMBER_OF_YR,
+            to_number(to_char(mydate,'YYYY')) YEAR_NUMBER,
+            decode(to_char(mydate, 'fmDay'),'Sunday',
+            
+            trunc(mydate),
+            next_day(trunc(mydate-7,'DD'), 'sun')) WEEK_BEGIN_DT,
+            decode(to_char(mydate, 'fmDay'),'Saturday',trunc(mydate),
+            next_day(trunc(mydate,'DD'), 'sat')) WEEK_END_DT,
+            TO_DATE(TO_CHAR(mydate,'YYYYMM')||'01','YYYYMMDD') MONTH_BEGIN_DT,
+            
+            trunc(last_day(mydate)) MONTH_END_DT,
+            case to_number(to_char(mydate,'Q'))
+                when 1 then TO_DATE(TO_CHAR(mydate,'YYYY')||'0101','YYYYMMDD')
+                when 2 then TO_DATE(TO_CHAR(mydate,'YYYY')||'0401','YYYYMMDD')
+                when 3 then TO_DATE(TO_CHAR(mydate,'YYYY')||'0701','YYYYMMDD')
+                when 4 then TO_DATE(TO_CHAR(mydate,'YYYY')||'1001','YYYYMMDD')
+                else null
+            end QTR_BEGIN_DT,
+            
+            case to_number(to_char(mydate,'Q'))
+                when 1 then TO_DATE(TO_CHAR(mydate,'YYYY')||'0331','YYYYMMDD')
+                when 2 then TO_DATE(TO_CHAR(mydate,'YYYY')||'0630','YYYYMMDD')
+                when 3 then TO_DATE(TO_CHAR(mydate,'YYYY')||'0930','YYYYMMDD')
+                when 4 then TO_DATE(TO_CHAR(mydate,'YYYY')||'1231','YYYYMMDD')
+                else null
+            end QTR_END_DT,
+            
+            TO_DATE(TO_CHAR(mydate,'YYYY')||'0101','YYYYMMDD') YEAR_BEGIN_DT,
+            TO_DATE(TO_CHAR(mydate,'YYYY')||'1231','YYYYMMDD') YEAR_END_DT
+    FROM
+  ( 
+    SELECT 
+      TO_DATE( '12/31/2019', 'MM/DD/YYYY' ) sd,
+      rownum rn
+    FROM dual
+      CONNECT BY level <= 1000
+  );
+  
+
+
+SELECT * FROM DIM_DATE where sysdate between WEEK_BEGIN_DT and WEEK_END_DT order by date_key;  
+    SELECT * FROM DIM_DATE where trunc(sysdate) between WEEK_BEGIN_DT and WEEK_END_DT;
+    select sysdate from dual
