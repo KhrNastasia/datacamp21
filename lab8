@@ -1,0 +1,409 @@
+--Table Space
+ALTER SYSTEM SET db_create_file_dest = '/oracle/';
+--storage level
+CREATE TABLESPACE ts_SA_CLIENT_DATA_01
+DATAFILE 'ts_SA_CLIENT_DATA_01.dat'
+SIZE 200M
+AUTOEXTEND ON NEXT 100M
+SEGMENT SPACE MANAGEMENT AUTO;
+
+CREATE TABLESPACE ts_SA_INSURANCE_DATA_01
+DATAFILE 'ts_SA_INSURANCE_ACTIVITY_DATA_01.dat'
+SIZE 150M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+ 
+--DW - Cleansing Level
+CREATE TABLESPACE ts_DW_CL_01
+DATAFILE 'ts_DW_CL_01.dat'
+SIZE 150M
+ AUTOEXTEND ON NEXT 50M
+SEGMENT SPACE MANAGEMENT AUTO;
+
+--DW – Level
+CREATE TABLESPACE ts_DW_DATA_01
+DATAFILE 'ts_DW_DATA_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+
+--DW– Prepare Star Cleansing Level
+CREATE TABLESPACE ts_SA_CL_001
+DATAFILE 'ts_SA_CL_001.dat'
+SIZE 150M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+
+--STAR - Cleansing
+CREATE TABLESPACE ts_SA_FCT_SALES_01
+DATAFILE 'ts_SA_FCT_SALES_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+ 
+ --STAR – Level
+ CREATE TABLESPACE ts_SA_DIM_AGENT_01
+DATAFILE 'ts_SA_DIM_AGENT_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+ 
+ CREATE TABLESPACE ts_SA_DIM_GEN_PERIODS_01
+DATAFILE 'ts_SA_DIM_GEN_PERIODS_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+ 
+ CREATE TABLESPACE ts_SA_DIM_CLIENT_01
+DATAFILE 'ts_SA_DIM_CLIENT_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+ 
+ CREATE TABLESPACE ts_SA_DIM_PRODUCTS_01
+DATAFILE 'ts_SA_DIM_PRODUCTS_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+ 
+ CREATE TABLESPACE ts_SA_DIM_GEO_01
+DATAFILE 'ts_SA_DIM_GEO_01.dat'
+SIZE 50M
+ AUTOEXTEND ON NEXT 50M
+ SEGMENT SPACE MANAGEMENT AUTO;
+
+
+--USER
+--Storage level
+--DROP USER SA_CLIENT
+CREATE USER SA_CLIENT
+  IDENTIFIED BY "%PWD%"
+    DEFAULT TABLESPACE ts_SA_CLIENT_DATA_01;
+
+GRANT CONNECT,RESOURCE TO SA_CLIENT;
+
+
+CREATE USER SA_INSURANCE_ACTIVITY
+  IDENTIFIED BY "%PWD%"
+    DEFAULT TABLESPACE ts_SA_INSURANCE_DATA_01;
+
+GRANT CONNECT,RESOURCE TO SA_INSURANCE_ACTIVITY;
+
+--DW - Cleansing Level
+CREATE USER DW_CL
+  IDENTIFIED BY "%PWD%"
+    DEFAULT TABLESPACE ts_DW_CL_01;
+
+GRANT CONNECT,RESOURCE TO DW_CL;
+
+--DW – Level
+CREATE USER DW_DATA
+  IDENTIFIED BY "%PWD%"
+    DEFAULT TABLESPACE ts_DW_DATA_01;
+
+GRANT CONNECT,RESOURCE, CREATE VIEW TO DW_DATA;
+
+--DW– Prepare Star Cleansing Level
+--DROP USER SA_DW_CL
+CREATE USER SA_DW_CL
+  IDENTIFIED BY "%PWD%";
+ 
+
+GRANT CONNECT,RESOURCE TO SA_DW_CL;
+
+--STAR - Cleansing
+--DROP USER SAL_CL
+CREATE USER SAL_CL
+  IDENTIFIED BY "%PWD%";
+ 
+
+GRANT CONNECT,RESOURCE TO SAL_CL;
+
+--STAR – Level
+DROP USER FCT_SALES;
+CREATE USER FCT_SALES
+  IDENTIFIED BY "%PWD%";
+   
+GRANT CONNECT,RESOURCE TO FCT_SALES;
+
+DROP USER DM_AGENT;
+CREATE USER DM_AGENT
+  IDENTIFIED BY "%PWD%";
+  
+GRANT CONNECT,RESOURCE TO DM_AGENT;
+
+DROP USER DM_GEN_PERIODS;
+CREATE USER DM_GEN_PERIODS
+  IDENTIFIED BY "%PWD%";
+ 
+GRANT CONNECT,RESOURCE TO DM_GEN_PERIODS;
+
+DROP USER DM_CLIENT;
+CREATE USER DM_CLIENT
+  IDENTIFIED BY "%PWD%";
+
+GRANT CONNECT,RESOURCE TO DM_CLIENT;
+
+DROP USER DM_INSURANCE_ACTIVITY;
+CREATE USER DM_INSURANCE_ACTIVITY
+  IDENTIFIED BY "%PWD%";
+
+GRANT CONNECT,RESOURCE TO DM_INSURANCE_ACTIVITY;
+
+DROP USER DM_GEO;
+CREATE USER DM_GEO
+  IDENTIFIED BY "%PWD%";
+
+GRANT CONNECT,RESOURCE TO DM_GEO;
+
+
+
+--STORAGE LEVEL
+--drop table SA_CLIENT.SA_CLIENT_T
+create table SA_CLIENT.SA_CLIENT_T
+(
+   CLIENT_id          number(8, 0)                         not null,
+   CLIENT_sur_id          number(8, 0)                         not null,
+   CLIENT_DESC        number (22, 0)                    not null,
+   FIRST_NAME         varchar2(30 char)                    not null,
+   LAST_NAME          varchar2(30 char)                    not null,
+   BIRTH_DATE         number (11, 0)                    not null,
+   PH_NUMBER          number (22, 0)                    not null,
+   SEX                varchar2(10 char)                    not null,
+   constraint PK_SA_CLIENT_T primary key (cLIENT_sur_id)
+)
+tablespace ts_sa_client_data_01;
+
+--drop table SA_INSURANCE_ACTIVITY.SA_INSURANCE_ACTIVITY_T
+create table SA_INSURANCE_ACTIVITY.SA_INSURANCE_ACTIVITY_T 
+(
+   ACTIVITY_id           number                              not null,
+   PRICE                 NUMBER                    not null,
+   PAYMENT                NUMBER                     not null,
+   CNT_ACTIVITY          NUMBER                 not null,
+   TYPE_OF_INSURANCE    varchar2(30 char)          not null,
+   TYPE_OF_OBJECT       varchar2(30 char)         not null,
+   constraint PK_SA_INSURANCE_ACTIVITY_T primary key (ACTIVITY_id)
+)
+tablespace ts_sa_INSURANCE_data_01;
+
+
+
+--DW LEVEL
+create table DW_DATA.DW_DATA_T
+(
+   date_id              number                         not null,
+   date_desc            varchar(30)                    not null,
+   full_number varchar2(20)                   not null,
+   full_string     varchar2(50)                   not null,
+   weekday_fl           number                         not null,
+   us_civil_holiday_fl  number                         not null,
+   last_day_of_week_fl  number                         not null,
+   last_day_of_month_fl number                         not null,
+   last_day_of_qtr_fl   number                         not null,
+   last_day_of_yr_fl    number                         not null,
+   day_id               number                         not null,
+   day_desc             varchar(30)                    not null,
+   day_of_week_name     varchar(20)                   not null,
+   day_of_week_abbr     varchar2(20)                      not null,
+   day_number_of_week   number                         not null,
+   day_number_of_month  number                         not null,
+   day_number_of_qtr    number                         not null,
+   day_number_of_yr     number                         not null,
+   week_id              number                         not null,
+   week_desc            varchar(30)                    not null,
+   week_number_of_month number                         not null,
+   week_number_of_qtr   number                         not null,
+   week_number_of_yr    number                         not null,
+   week_begin_dt        date                           not null,
+   week_end_dt          date                           not null,
+   month_id             number                         not null,
+   month_desc           varchar(30)                    not null,
+   month_name           varchar2(20)                   not null,
+   month_name_abbr      varchar2(20)                   not null,
+   month_number_of_qtr  number                         not null,
+   month_number_of_yr   number                         not null,
+   month_begin_dt       date                           not null,
+   month_end_dt         date                           not null,
+   quarter_id           number                         not null,
+   quarter_desc         varchar(30)                    not null,
+   qtr_number_of_yr     number                         not null,
+   qtr_begin_dt         date                           not null,
+   qtr_end_dt           date                           not null,
+   year_id              number                         not null,
+   year_desc            varchar(30)                    not null,
+   yr_begin_dt          date                           not null,
+   yr_end_dt            date                           not null,
+   insert_dt            date                           not null,
+   update_dt            date                           not null,
+   constraint PK_DW_DATA_T primary key (date_id)
+)
+tablespace ts_dw_data_01;
+
+
+
+--STAR LEVEL
+create table DM_DATE.DM_DATE_T
+(
+   date_id              number                         not null,
+   date_desc            varchar(30)                    not null,
+   full_number varchar2(20)                   not null,
+   full_string     varchar2(50)                   not null,
+   weekday_fl           number                         not null,
+   us_civil_holiday_fl  number                         not null,
+   last_day_of_week_fl  number                         not null,
+   last_day_of_month_fl number                         not null,
+   last_day_of_qtr_fl   number                         not null,
+   last_day_of_yr_fl    number                         not null,
+   day_id               number                         not null,
+   day_desc             varchar(30)                    not null,
+   day_of_week_name     varchar(20)                   not null,
+   day_of_week_abbr     varchar2(20)                      not null,
+   day_number_of_week   number                         not null,
+   day_number_of_month  number                         not null,
+   day_number_of_qtr    number                         not null,
+   day_number_of_yr     number                         not null,
+   week_id              number                         not null,
+   week_desc            varchar(30)                    not null,
+   week_number_of_month number                         not null,
+   week_number_of_qtr   number                         not null,
+   week_number_of_yr    number                         not null,
+   week_begin_dt        date                           not null,
+   week_end_dt          date                           not null,
+   month_id             number                         not null,
+   month_desc           varchar(30)                    not null,
+   month_name           varchar2(20)                   not null,
+   month_name_abbr      varchar2(20)                   not null,
+   month_number_of_qtr  number                         not null,
+   month_number_of_yr   number                         not null,
+   month_begin_dt       date                           not null,
+   month_end_dt         date                           not null,
+   quarter_id           number                         not null,
+   quarter_desc         varchar(30)                    not null,
+   qtr_number_of_yr     number                         not null,
+   qtr_begin_dt         date                           not null,
+   qtr_end_dt           date                           not null,
+   year_id              number                         not null,
+   year_desc            varchar(30)                    not null,
+   yr_begin_dt          date                           not null,
+   yr_end_dt            date                           not null,
+   insert_dt            date                           not null,
+   update_dt            date                           not null,
+   constraint PK_DM_DATE_T primary key (date_id)
+)
+tablespace ts_sa_DIM_datE_01;
+
+
+
+create table dm_geo.DIM_GEO_LOCATIONS 
+(
+   territory_id         number                         not null,
+   territory_desc       varchar(30)                    not null,
+   country_id           number                         not null,
+   country_code         varchar(30)                    not null,
+   country_desc         varchar(30)                    not null,
+   region_id            number                         not null,
+   region_code          varchar(30)                    not null,
+   region_desc          varchar(30)                    not null,
+   part_id              number                         not null,
+   part_code            varchar(30)                    not null,
+   part_desc            varchar(30)                    not null,
+   geo_systems_id       number                         not null,
+   geo_systems_code     varchar(30)                    not null,
+   geo_systems_desc     varchar(30)                    not null,
+   geo_id               number                         not null,
+   geo_code             varchar(30)                    not null,
+   geo_type_id          number                         not null,
+   geo_type_code        varchar(30)                    not null,
+   geo_type_desc        varchar(30)                    not null,
+   insert_dt            date                           not null,
+   update_dt            date                           not null,
+   constraint PK_DIM_GEO_LOCATIONS primary key (territory_id)
+)
+tablespace ts_sa_diM_GEO_01;
+
+--drop table DM_INSURANCE_ACTIVITY.DM_INSURANCE_ACTIVITY_scd 
+create table DM_INSURANCE_ACTIVITY.DM_INSURANCE_ACTIVITY_scd 
+(
+   ACTIVITY_ID              number                         not null,
+   ACTIVITY_SUR_ID         number                         not null,
+   ACTIVITY_DESC            varchar(30)                           not null,
+   PRICE                   number                        not null,
+   PAYMENT                 number                           not null,
+   CNT_ACTIVITY            number                           not null,
+   TYPE_OF_INSURANCE       varchar(30)                         not null,
+   TYPE_OF_INSURANCE_DESC  varchar(30)                         not null,
+   TYPE_OF_OBJECT          varchar(30)                    not null,
+   TYPE_OF_OBJECT_DESC     varchar(30)                        not null,
+   update_dt               date                    not null,
+   insert_dt               date                           not null,
+   constraint DM_INCURANSE_ACTIVITY_scd primary key (activity_sur_id)
+)
+tablespace ts_SA_DIM_INSURANCE_01;
+
+
+
+create table DM_GEN_PERIODS.DIM_GEN_PERIOD 
+(
+   period_id        number                         not null,
+   period_sur_id        number                         not null,
+   SMALL_COST_from      number                      not null,
+   SMALL_COST_to         number                         not null,
+   MIDDLE_COST_from           number                         not null,
+   MIDDLE_COST_to            number                            not null,
+   HIGH_COST_from         number                          not null,
+   HIGH_COST_to          number                           not null,
+   insert_dt           date                           not null,
+   update_dt          date                           not null,
+   constraint PK_DIM_GEN_PERIOD primary key (period_sur_id)
+)
+tablespace ts_SA_DIM_GEN_PERIODS_01;
+
+
+create table dm_client.DIM_Client_t
+(
+   client_id          number                         not null,
+   CLIENT_sur_id          number(8, 0)                         not null,
+   client_desc        varchar(30)                    not null,
+   first_name      varchar(20)                    not null,
+   last_name        varchar(30)                         not null,
+   birth_date            date                           not null,
+   ph_number            number                           not null,
+   sex      varchar(10)                    not null,
+   insert_dt      date                    not null,
+   update_dt     date                    not null,
+   constraint PK_DIM_Client_t primary key (client_sur_id)
+)
+tablespace ts_SA_DIM_CLIENT_01;
+
+
+create table DM_AGENT.DIM_agent 
+(
+   agent_id           number                         not null,
+   agent_sur_id           number                         not null,
+    first_name      varchar(20)                    not null,
+   last_name        varchar(30)                         not null,
+    ph_number            number                           not null,
+   insert_dt            date                           not null,
+   update_dt            date                           not null,
+   constraint PK_DIM_agent primary key (agent_sur_id)
+)
+tablespace ts_SA_DIM_AGENT_01;
+
+
+create table FCT_SALES.FCT_SALE_DD
+(
+   sale_id             date                           not null,
+   activity_sur_id         number                         not null, 
+   date_id              number                         not null,
+   agent_sur_id         number                         not null, 
+   period_sur_id         number                         not null,
+   territory_id         number                         not null,
+   client_sur_id         number                         not null, 
+   sale_cost         number                         not null, 
+   sale_desc         number                         not null,   
+   update_dt            date                           not null,
+   insert_dt            date                           not null
+)
+tablespace ts_SA_FCT_SALES_01;
+
