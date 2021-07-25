@@ -187,7 +187,40 @@ create table SA_INSURANCE_ACTIVITY.SA_INSURANCE_ACTIVITY_T
 )
 tablespace ts_sa_INSURANCE_data_01;
 
+--CLEANSING LEVEL
+create or replace package DW_CL.pkg_cleansing
+as  
+    procedure load_ref_AGENT;
+    procedure load_ref_CLIENT;
+    procedure load_ref_INSURANCE_ACTIVITY;
+    procedure load_ref_geo_locations;
+    procedure load_ref_sales;
+end;
 
+--Prep STAR - Cleansing
+create or replace package SA_DW_CL.pkg_cleansing_prep_star
+as  
+    procedure load_FCT_SALES;
+    procedure load_DM_AGENT;
+    procedure load_DM_CLIENT;
+    procedure load_DM_GEO;
+    procedure load_DM_INSURANCE_ACTIVITY;
+    procedure load_DM_DM_DATE;
+    procedure load_DM_DM_GEN_PERIODS;
+end;
+
+
+--DW Star Cleansing Level
+create or replace package SA_DW_CL.pkg_cleansing_star
+as  
+    procedure load_FCT_SALES;
+    procedure load_DM_AGENT;
+    procedure load_DM_CLIENT;
+    procedure load_DM_GEO;
+    procedure load_DM_INSURANCE_ACTIVITY;
+    procedure load_DM_DM_DATE;
+    procedure load_DM_DM_GEN_PERIODS;
+end;
 
 --DW LEVEL
 create table DW_DATA.DW_DATA_T
@@ -406,4 +439,34 @@ create table FCT_SALES.FCT_SALE_DD
    insert_dt            date                           not null
 )
 tablespace ts_SA_FCT_SALES_01;
+alter table FCT_SALEs.fct_sale_dd 
+   add constraint FK_FCT_SALE_dd_REF_DIM_GEO_LOCATIONS foreign key (territory_id)
+      references dm_geo.DIM_GEO_LOCATIONS (territory_id)
+      on delete cascade;
+
+alter table FCT_SALES.FCT_SALE_DD
+   add constraint FK_FCT_SAL_dd_REFERENCE_DM_INSURANCE_ACTIVITY_scd foreign key (activity_sur_id)
+      references FCT_SALEs.DM_INSURANCE_ACTIVITY_scd (ACTIVITY_sur_id)
+     on delete cascade;
+
+alter table FCT_SALES.FCT_SALES_DD
+   add constraint FK_FCT_SALE_REFERENCE_DIM_Client foreign key (client_sur_id)
+      references FCT_SALES.DIM_Client (client_sur_id)
+      on delete cascade;
+
+alter table FCT_SALES.FCT_SALES_DD
+   add constraint FK_FCT_SALE_REFERENCE_DIM_agent_t foreign key (agent_sur_id)
+      references FCT_SALES.DIM_agent_t (customer_id)
+      on delete cascade;
+
+alter table FCT_SALES.FCT_SALES_DD
+   add constraint FK_FCT_SALE_REFERENCE_DIM_DATE foreign key (date_id)
+      references FCT_SALES.DIM_DATE (date_id)
+      on delete cascade;
+
+alter table FCT_SALES.FCT_SALES_DD
+   add constraint FK_FCT_SALE_REFERENCE_DIM_GEN_PERIODS foreign key (period_sur_id)
+      references FCT_SALES.DIM_GEN_PERIODS  (period_sur_id)
+      on delete cascade;
+
 
