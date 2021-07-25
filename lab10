@@ -77,12 +77,13 @@ FROM
   
    
     
-SET AUTOTRACE ON;
-SELECT * from calendar;
+SET AUTOTRACE ON explain;
+SELECT count(*) from calendar where day_name = 'воскресенье';
 
 
-SET AUTOTRACE ON;
-SELECT  /*+ PARALLEL(2) */ * from calendar;
+    
+SET AUTOTRACE ON explain;
+SELECT /*+ PARALLEL(2) */ count(*) from calendar where day_name = 'воскресенье';
 
 --dml
 ALTER SESSION ENABLE PARALLEL DML;
