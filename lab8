@@ -125,42 +125,12 @@ CREATE USER SAL_CL
 GRANT CONNECT,RESOURCE TO SAL_CL;
 
 --STAR – Level
-DROP USER FCT_SALES;
-CREATE USER FCT_SALES
-  IDENTIFIED BY "%PWD%";
-   
-GRANT CONNECT,RESOURCE TO FCT_SALES;
 
-DROP USER DM_AGENT;
-CREATE USER DM_AGENT
-  IDENTIFIED BY "%PWD%";
-  
-GRANT CONNECT,RESOURCE TO DM_AGENT;
+ CREATE USER ts_SAl_star_data_user
+  IDENTIFIED BY "%PWD%"
+    DEFAULT TABLESPACE ts_SAl_star_data;
 
-DROP USER DM_GEN_PERIODS;
-CREATE USER DM_GEN_PERIODS
-  IDENTIFIED BY "%PWD%";
- 
-GRANT CONNECT,RESOURCE TO DM_GEN_PERIODS;
-
-DROP USER DM_CLIENT;
-CREATE USER DM_CLIENT
-  IDENTIFIED BY "%PWD%";
-
-GRANT CONNECT,RESOURCE TO DM_CLIENT;
-
-DROP USER DM_INSURANCE_ACTIVITY;
-CREATE USER DM_INSURANCE_ACTIVITY
-  IDENTIFIED BY "%PWD%";
-
-GRANT CONNECT,RESOURCE TO DM_INSURANCE_ACTIVITY;
-
-DROP USER DM_GEO;
-CREATE USER DM_GEO
-  IDENTIFIED BY "%PWD%";
-
-GRANT CONNECT,RESOURCE TO DM_GEO;
-
+GRANT CONNECT,RESOURCE TO ts_SAl_star_data_user;
 
 
 --STORAGE LEVEL
@@ -281,7 +251,8 @@ tablespace ts_dw_data_01;
 
 
 --STAR LEVEL
-create table DM_DATE.DM_DATE_T
+
+create table ts_SAl_star_data_user.DM_DATE
 (
    date_id              number                         not null,
    date_desc            varchar(30)                    not null,
@@ -329,11 +300,11 @@ create table DM_DATE.DM_DATE_T
    update_dt            date                           not null,
    constraint PK_DM_DATE_T primary key (date_id)
 )
-tablespace ts_sa_DIM_datE_01;
+tablespace ts_SAl_star_data;
 
 
 
-create table dm_geo.DIM_GEO_LOCATIONS 
+create table ts_SAl_star_data_user.DIM_GEO
 (
    territory_id         number                         not null,
    territory_desc       varchar(30)                    not null,
@@ -356,12 +327,12 @@ create table dm_geo.DIM_GEO_LOCATIONS
    geo_type_desc        varchar(30)                    not null,
    insert_dt            date                           not null,
    update_dt            date                           not null,
-   constraint PK_DIM_GEO_LOCATIONS primary key (territory_id)
+   constraint PK_DIM_GEO primary key (territory_id)
 )
-tablespace ts_sa_diM_GEO_01;
+tablespace ts_SAl_star_data;
 
 --drop table DM_INSURANCE_ACTIVITY.DM_INSURANCE_ACTIVITY_scd 
-create table DM_INSURANCE_ACTIVITY.DM_INSURANCE_ACTIVITY_scd 
+create table ts_SAl_star_data_user.DM_INSURANCE_ACTIVITY
 (
    ACTIVITY_ID              number                         not null,
    ACTIVITY_SUR_ID         number                         not null,
@@ -375,13 +346,13 @@ create table DM_INSURANCE_ACTIVITY.DM_INSURANCE_ACTIVITY_scd
    TYPE_OF_OBJECT_DESC     varchar(30)                        not null,
    update_dt               date                    not null,
    insert_dt               date                           not null,
-   constraint DM_INCURANSE_ACTIVITY_scd primary key (activity_sur_id)
+   constraint DM_INCURANSE_ACTIVITY primary key (activity_sur_id)
 )
-tablespace ts_SA_DIM_INSURANCE_01;
+tablespace ts_SAl_star_data;
 
 
 
-create table DM_GEN_PERIODS.DIM_GEN_PERIOD 
+create table ts_SAl_star_data_user.DIM_GEN_PERIOD 
 (
    period_id        number                         not null,
    period_sur_id        number                         not null,
@@ -395,10 +366,10 @@ create table DM_GEN_PERIODS.DIM_GEN_PERIOD
    update_dt          date                           not null,
    constraint PK_DIM_GEN_PERIOD primary key (period_sur_id)
 )
-tablespace ts_SA_DIM_GEN_PERIODS_01;
+tablespace ts_SAl_star_data;
 
 
-create table dm_client.DIM_Client_t
+create table ts_SAl_star_data_user.DIM_Client
 (
    client_id          number                         not null,
    CLIENT_sur_id          number(8, 0)                         not null,
@@ -410,12 +381,12 @@ create table dm_client.DIM_Client_t
    sex      varchar(10)                    not null,
    insert_dt      date                    not null,
    update_dt     date                    not null,
-   constraint PK_DIM_Client_t primary key (client_sur_id)
+   constraint PK_DIM_Client primary key (client_sur_id)
 )
-tablespace ts_SA_DIM_CLIENT_01;
+tablespace ts_SAl_star_data;
 
 
-create table DM_AGENT.DIM_agent 
+create table ts_SAl_star_data_user.DIM_agent
 (
    agent_id           number                         not null,
    agent_sur_id           number                         not null,
@@ -426,10 +397,10 @@ create table DM_AGENT.DIM_agent
    update_dt            date                           not null,
    constraint PK_DIM_agent primary key (agent_sur_id)
 )
-tablespace ts_SA_DIM_AGENT_01;
+tablespace ts_SAl_star_data;
 
 
-create table FCT_SALES.FCT_SALE_DD
+create table ts_SAl_star_data_user.FCT_SALE_DD
 (
    sale_id             date                           not null,
    activity_sur_id         number                         not null, 
@@ -443,35 +414,35 @@ create table FCT_SALES.FCT_SALE_DD
    update_dt            date                           not null,
    insert_dt            date                           not null
 )
-tablespace ts_SA_FCT_SALES_01;
-alter table FCT_SALEs.fct_sale_dd 
-   add constraint FK_FCT_SALE_dd_REF_DIM_GEO_LOCATIONS foreign key (territory_id)
-      references dm_geo.DIM_GEO_LOCATIONS (territory_id)
+tablespace ts_SAl_star_data;
+commit;
+
+alter table  ts_SAl_star_data_user.FCT_SALE_DD 
+   add constraint FK_FCT_SALE_REFerence_DIM_GEO foreign key (territory_id)
+      references ts_SAl_star_data_user.DIM_GEO (territory_id)
       on delete cascade;
 
-alter table FCT_SALES.FCT_SALE_DD
-   add constraint FK_FCT_SAL_dd_REFERENCE_DM_INSURANCE_ACTIVITY_scd foreign key (activity_sur_id)
-      references FCT_SALEs.DM_INSURANCE_ACTIVITY_scd (ACTIVITY_sur_id)
-     on delete cascade;
-
-alter table FCT_SALES.FCT_SALES_DD
-   add constraint FK_FCT_SALE_REFERENCE_DIM_Client foreign key (client_sur_id)
-      references FCT_SALES.DIM_Client (client_sur_id)
+alter table  ts_SAl_star_data_user.FCT_SALE_DD 
+   add constraint FK_FCT_SALE_REFerence_DM_date foreign key (date_id)
+      references ts_SAl_star_data_user.DM_date (date_id)
       on delete cascade;
 
-alter table FCT_SALES.FCT_SALES_DD
-   add constraint FK_FCT_SALE_REFERENCE_DIM_agent_t foreign key (agent_sur_id)
-      references FCT_SALES.DIM_agent_t (customer_id)
+alter table  ts_SAl_star_data_user.FCT_SALE_DD 
+   add constraint FK_FCT_SALE_REFerence_DM_insurance_activity foreign key (activity_sur_id)
+      references ts_SAl_star_data_user.DM_insurance_activity (activity_sur_id)
       on delete cascade;
 
-alter table FCT_SALES.FCT_SALES_DD
-   add constraint FK_FCT_SALE_REFERENCE_DIM_DATE foreign key (date_id)
-      references FCT_SALES.DIM_DATE (date_id)
+alter table  ts_SAl_star_data_user.FCT_SALE_DD 
+   add constraint FK_FCT_SALE_REFerence_Dim_client foreign key (client_sur_id)
+      references ts_SAl_star_data_user.DiM_client (client_sur_id)
       on delete cascade;
 
-alter table FCT_SALES.FCT_SALES_DD
-   add constraint FK_FCT_SALE_REFERENCE_DIM_GEN_PERIODS foreign key (period_sur_id)
-      references FCT_SALES.DIM_GEN_PERIODS  (period_sur_id)
+alter table  ts_SAl_star_data_user.FCT_SALE_DD 
+   add constraint FK_FCT_SALE_REFerence_DIM_GEn_period foreign key (period_sur_id)
+      references ts_SAl_star_data_user.DIM_GEn_period (period_sur_id)
       on delete cascade;
 
-
+alter table  ts_SAl_star_data_user.FCT_SALE_DD 
+   add constraint FK_FCT_SALE_REFerence_DIM_agent foreign key (agent_sur_id)
+      references ts_SAl_star_data_user.DIM_agent (agent_sur_id)
+      on delete cascade;
