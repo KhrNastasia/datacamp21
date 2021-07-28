@@ -141,3 +141,65 @@ CONNECT BY LEVEL <= DATE '2020-12-31' - DATE '2020-01-01' + 1;
 COMMIT;
 
 SELECT * FROM ts_SA_data_01_user.SA_SALE_DD ORDER BY sale_id;
+
+select client_sur_id, name, sex from sa_client 
+where sex = 'M'
+group by client_sur_id, name, sex
+order by client_sur_id;
+
+SELECT COUNT(*), sex 
+  FROM ts_sa_data_01_user.sa_client
+ GROUP BY sex; 
+ 
+ SELECT COUNT(*), name 
+  FROM ts_sa_data_01_user.sa_client
+ GROUP BY name; 
+ 
+ SELECT COUNT(*), price
+  FROM ts_sa_data_01_user.sa_sale_dd
+ GROUP BY price; 
+ 
+  SELECT COUNT(*), cnt_activity
+  FROM ts_sa_data_01_user.sa_activity
+ GROUP BY cnt_activity; 
+ 
+ create table ts_SA_data_01_user.update_SA_Client
+(
+   CLIENT_sur_id          number(8, 0)                         not null,
+   client_desc        varchar(30)                    not null,
+   name        varchar(30)                         not null,
+   sex      varchar(10)                    not null,
+   insert_dt      date                    not null,
+   update_dt     date                    not null,
+   constraint update_SA_Client primary key (client_sur_id)
+)
+tablespace ts_SA_data_01;
+
+INSERT INTO ts_SA_data_01_user.update_SA_CLIENT(CLIENT_SUR_ID
+                                           , CLIENT_desc
+                                           , NAME
+                                           , SEX
+                                           , INSERT_DT
+                                           , UPDATE_DT )
+SELECT ROWNUM
+       , 'Client ' || to_char(ROWNUM)
+       , randomstring('asdfghjkl', DBMS_RANDOM.VALUE (3,5))
+       , randomstring('FM', 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+  FROM DUAL
+  CONNECT BY LEVEL <= 10000;
+  
+  select * from ts_SA_data_01_user.update_SA_CLIENT order by client_sur_id;
+  
+  MERGE INTO ts_SA_data_01_user.update_sa_client U
+USING (SELECT sex
+              , COUNT(*) cnt 
+         FROM ts_SA_data_01_user.sa_client 
+        GROUP BY sex) C
+   ON (U.sex = c.sex)
+ WHEN MATCHED THEN UPDATE SET client_desc = to_char(C.cnt);
+
+SELECT * FROM ts_SA_data_01_user.update_sa_client;
+COMMIT;
+  
