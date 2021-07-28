@@ -1,0 +1,143 @@
+create table ts_SA_data_01_user.SA_ACTIVITY
+(
+   ACTIVITY_SUR_ID         number                         not null,
+   ACTIVITY_DESC            varchar(30)                           not null,
+   CNT_ACTIVITY            number                           not null,
+   TYPE_OF_INSURANCE       varchar(30)                         not null,
+   TYPE_OF_OBJECT          varchar(30)                    not null,
+   update_dt               date                    not null,
+   insert_dt               date                           not null,
+   constraint SA_ACTIVITY primary key (activity_sur_id)
+)
+tablespace ts_SA_data_01;
+
+create table ts_SA_data_01_user.SA_Client
+(
+   CLIENT_sur_id          number(8, 0)                         not null,
+   client_desc        varchar(30)                    not null,
+   name        varchar(30)                         not null,
+   sex      varchar(10)                    not null,
+   insert_dt      date                    not null,
+   update_dt     date                    not null,
+   constraint SA_Client primary key (client_sur_id)
+)
+tablespace ts_SA_data_01;
+
+
+create table ts_SA_data_01_user.SA_agent
+(
+   agent_sur_id           number                         not null,
+   name        varchar(30)                         not null,
+   AGENT_DESC          varchar(30)                          not null,
+   insert_dt            date                           not null,
+   update_dt            date                           not null,
+   constraint SA_agent primary key (agent_sur_id)
+)
+tablespace ts_SA_data_01;
+
+--DROP table ts_SA_data_01_user.SA_SALE_DD
+create table ts_SA_data_01_user.SA_SALE_DD
+(
+   sale_id             NUMBER                          not null,
+   SALE          NUMBER                      NOT NULL,
+   PRICE         number                         not null, 
+   PROFIT         number                         not null,   
+   update_dt            date                           not null,
+   insert_dt            date                           not null
+)
+tablespace ts_SA_data_01;
+commit;
+
+  
+CREATE OR REPLACE FUNCTION randomstring(p_Characters VARCHAR2, p_length NUMBER)
+  RETURN VARCHAR2
+  IS
+     l_res VARCHAR2(256);
+  BEGIN
+    SELECT substr(LISTAGG(SUBSTR(p_Characters, LEVEL, 1)) WITHIN GROUP(ORDER BY DBMS_RANDOM.VALUE), 1, p_length)
+      INTO l_res
+      FROM DUAL
+    CONNECT BY LEVEL <= LENGTH(p_Characters);
+    RETURN l_res;
+  END;
+  /
+COMMIT;
+
+ALTER USER ts_SA_data_01_user QUOTA UNLIMITED ON ts_SA_data_01;
+GRANT UNLIMITED TABLESPACE TO ts_SA_data_01_user;
+
+--delete ts_sal_star_data_user.DIM_CLIENT
+INSERT INTO ts_SA_data_01_user.SA_CLIENT(CLIENT_SUR_ID
+                                           , CLIENT_desc
+                                           , NAME
+                                           , SEX
+                                           , INSERT_DT
+                                           , UPDATE_DT )
+SELECT ROWNUM
+       , 'Client ' || to_char(ROWNUM)
+       , randomstring('qwseartyuiop', DBMS_RANDOM.VALUE (3,5))
+       , randomstring('FM', 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+  FROM DUAL
+  CONNECT BY LEVEL <= 10000;
+  
+  select * from ts_SA_data_01_user.SA_CLIENT order by client_sur_id;
+  
+  --delete ts_sal_star_data_user.DIM_agent
+  INSERT INTO ts_SA_data_01_user.SA_AGENT(AGENT_SUR_ID
+                                           , AGENT_desc
+                                           , NAME
+                                           , INSERT_DT
+                                           , UPDATE_DT
+                                           )
+SELECT ROWNUM
+       , 'Agent ' || to_char(ROWNUM)
+       , randomstring('ASDFGHJKL', DBMS_RANDOM.VALUE (3,5))
+       , (DATE '2020-01-01' + LEVEL - 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+  FROM DUAL
+  CONNECT BY LEVEL <= 1000;
+ 
+   select * from ts_SA_data_01_user.SA_agent order by agent_sur_id;
+  
+  --delete ts_sal_star_data_user.DM_INSURANCE_ACTIVITY;
+  INSERT INTO ts_SA_data_01_user.SA_activity (Activity_SUR_ID
+                                           , Activity_desc
+                                           , cnt_activity
+                                           , TYPE_OF_INSURANCE
+                                           , TYPE_OF_OBJECT
+                                           , INSERT_DT
+                                           , UPDATE_DT
+                                           )
+SELECT ROWNUM
+       , 'ACTIVITY ' || to_char(ROWNUM)
+       , round((DBMS_RANDOM.VALUE(1, 25)),0) 
+       , randomstring('INSURANCE', DBMS_RANDOM.VALUE (3,5))
+       , randomstring('OBJECT', DBMS_RANDOM.VALUE (3,5))
+       , (DATE '2020-01-01' + LEVEL - 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+  FROM DUAL
+  CONNECT BY LEVEL <= 100000;
+      
+        select * from ts_SA_data_01_user.SA_ACTIVITY order by ACTIVITY_sur_id;
+        
+        
+TRUNCATE TABLE ts_SA_data_01_user.SA_SALE_DD;
+INSERT INTO ts_SA_data_01_user.SA_SALE_DD (sale_id
+                                           , sale
+                                           , PRICE
+                                           , profit
+                                           , INSERT_DT
+                                           , UPDATE_DT)
+SELECT ROWNUM
+       , ROUND((DBMS_RANDOM.VALUE(1, 1000000)),0)
+       , ROUND((DBMS_RANDOM.VALUE(1, 100000000)),0)
+       , ROUND((DBMS_RANDOM.VALUE(1, 100)),0)
+       , (DATE '2020-01-01' + LEVEL - 1)
+       , (DATE '2020-01-01' + LEVEL - 1)
+  FROM DUAL
+CONNECT BY LEVEL <= DATE '2020-12-31' - DATE '2020-01-01' + 1;
+COMMIT;
+
+SELECT * FROM ts_SA_data_01_user.SA_SALE_DD ORDER BY sale_id;
