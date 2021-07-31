@@ -1,0 +1,81 @@
+--Task 3.1
+VARIABLE n_all_data NUMBER;
+VARIABLE n_client NUMBER;
+VARIABLE n_agent NUMBER;
+VARIABLE n_summary NUMBER;
+BEGIN
+ -- set values to 0 to disable
+ :n_all_data := 0; -- 1 to enable
+ :n_client := 2; -- 2 to enable
+ :n_agent  := 0; -- 3 to enable
+ :n_summary  := 4; -- 4 to enable
+END;
+/
+
+SET AUTOTRAcE ON;
+
+SELECT act.activity_desc activity
+       , decode(GROUPING(a.agent_desc),1,'ALL agents',a.agent_desc) agent
+       , decode(GROUPING(c.client_desc),1,'ALL Clients',c.client_desc) client
+       , d.date_day_number_of_yr day
+       , SUM(S.sale) sales
+  FROM   ts_SA_data_01_user.SA_SALE_DD s
+       join ts_SA_data_01_user.SA_agent a on a.agent_sur_id = s.agent_sur_id 
+       join ts_SA_data_01_user.sa_activity act on act.activity_sur_id = s.activity_sur_id 
+       join u_dw_references.dim_date d on d.date_key = s.date_id
+       join ts_SA_data_01_user.sa_client c on c.client_sur_id = s.client_sur_id
+ WHERE d.date_day_number_of_yr BETWEEN 1 AND 365
+ GROUP BY d.date_day_number_of_yr
+           ,act.activity_desc
+          , CUBE(a.agent_desc, c.client_desc)
+HAVING GROUPING_ID(a.agent_desc,c.client_desc)+1 IN(:n_all_data,:n_agent,:n_client,:n_summary)
+ ORDER BY  4, 1, 2, 3;
+ 
+ 
+ --Task 3.2
+ SET AUTOTRAcE ON;
+ 
+ SELECT act.activity_desc activity
+       , decode(GROUPING(a.agent_desc),1,'ALL agents',a.agent_desc) agent
+       , decode(GROUPING(c.client_desc),1,'ALL Clients',c.client_desc) client
+       , d.DATE_MONTH_NUMBER_OF_YR month
+       , SUM(S.sale) sales
+  FROM   ts_SA_data_01_user.SA_SALE_DD s
+       join ts_SA_data_01_user.SA_agent a on a.agent_sur_id = s.agent_sur_id 
+       join ts_SA_data_01_user.sa_activity act on act.activity_sur_id = s.activity_sur_id 
+       join u_dw_references.dim_date d on d.date_key = s.date_id
+       join ts_SA_data_01_user.sa_client c on c.client_sur_id = s.client_sur_id
+ WHERE
+   d.DATE_MONTH_NUMBER_OF_YR BETWEEN 1 AND 13
+ GROUP BY d.DATE_MONTH_NUMBER_OF_YR
+           ,act.activity_desc
+          , CUBE(a.agent_desc, c.client_desc)
+HAVING GROUPING_ID(a.agent_desc,c.client_desc)+1 IN(:n_all_data,:n_agent,:n_client,:n_summary)
+ ORDER BY  4, 1, 2, 3;
+ 
+--Task 3.3 
+SET AUTOTRACE ON;
+SELECT 
+         d.date_year_number year
+        , d.date_qtr_number_of_yr quarter
+        , d.date_month_number_of_yr month
+        , d.date_day_number_of_yr day
+        , GROUPING_Id(d.date_year_number
+                      , d.date_qtr_number_of_yr
+                      , d.date_month_number_of_yr
+                      , d.date_day_number_of_yr) gid
+                      , act.activity_desc activity
+                      , decode(GROUPING(a.agent_desc),1,'ALL agents',a.agent_desc) agent
+                      , decode(GROUPING(c.client_desc),1,'ALL Clients',c.client_desc) client
+                      , SUM(S.sale) sales
+  FROM    ts_SA_data_01_user.SA_SALE_DD s
+       join ts_SA_data_01_user.SA_agent a on a.agent_sur_id = s.agent_sur_id 
+       join ts_SA_data_01_user.sa_activity act on act.activity_sur_id = s.activity_sur_id 
+       join u_dw_references.dim_date d on d.date_key = s.date_id
+       join ts_SA_data_01_user.sa_client c on c.client_sur_id = s.client_sur_id 
+ GROUP BY act.activity_desc
+          , ROLLUP(a.agent_desc, c.client_desc)
+          , ROLLUP(d.date_year_number
+                   , d.date_qtr_number_of_yr
+                   , d.date_month_number_of_yr
+                   , d.date_day_number_of_yr);
