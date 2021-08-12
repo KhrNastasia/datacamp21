@@ -1,0 +1,505 @@
+CREATE OR REPLACE PACKAGE sa_DW_CL.pkg_etl_dim_clients_dw
+AS
+   PROCEDURE load_clients;
+END;
+/
+CREATE OR REPLACE PACKAGE BODY sa_DW_CL.pkg_etl_dim_clients_dw
+
+AS
+   PROCEDURE load_clients
+   AS
+   BEGIN
+      MERGE INTO u_dw_data.dw_Clients target
+           USING (SELECT clients_id, clients_sur_id, clients_desc, name, sex, insert_dt, update_dt FROM ts_sa_data_01_user.sa_clients ) source
+              ON ( target.clients_id = source.clients_id)
+      WHEN NOT MATCHED THEN
+         INSERT (clients_id, clients_sur_id, clients_desc, name, sex, insert_dt, update_dt)
+             VALUES (source.clients_id, source.clients_sur_id, source.clients_desc, source.name, source.sex
+             , (select CURRENT_DATE from DUAL)
+             , (select CURRENT_DATE from DUAL))
+      WHEN MATCHED THEN
+         UPDATE SET target.clients_desc = source.clients_desc, target.name = source.name, target.sex = source.sex
+         , target.update_dt = (select CURRENT_DATE from dual);
+
+      --Commit Resulst
+      COMMIT;
+   END load_clients;
+END;
+/
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE sa_DW_CL.pkg_etl_dim_agent_dw
+AS
+    CURSOR agnt IS SELECT agent_id FROM ts_sa_data_01_user.sa_agent where agent_id not in (SELECT agent_id FROM u_dw_data.dw_agent);
+    CURSOR agent_updt IS SELECT agent_id FROM ts_sa_data_01_user.sa_agent where agent_id in (SELECT agent_id FROM u_dw_data.dw_agent);
+    TYPE ids IS TABLE OF NUMBER;
+    agent_ids_array ids ;
+    updt_agent_ids_array ids ;
+    PROCEDURE load_agent;
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY sa_DW_CL.pkg_etl_dim_agent_dw
+
+AS
+   PROCEDURE load_agent
+   AS
+   BEGIN
+      MERGE INTO u_dw_data.DW_agent target
+           USING (SELECT * FROM ts_sa_data_01_user.sa_agent) source
+              ON ( target.agent_id = source.agent_id)
+      WHEN NOT MATCHED THEN
+         INSERT (agent_id, agent_sur_id, name, agent_desc, insert_dt, update_dt)
+             VALUES (source.agent_id, source.agent_sur_id, source.name, source.agent_desc
+             , (select CURRENT_DATE from DUAL)
+             , (select CURRENT_DATE from DUAL))
+      WHEN MATCHED THEN
+         UPDATE SET target.agent_sur_id=source.agent_sur_id, target.name=source.name 
+         , target.agent_desc = source.agent_desc
+         , target.update_dt= (select CURRENT_DATE from dual);
+
+      --Commit Resulst
+      COMMIT;
+   END load_agent;
+END;
+/
+-------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE sa_DW_CL.pkg_etl_dim_date_dw
+AS
+    CURSOR cur IS SELECT * FROM u_dw_data.dw_date;
+    
+    TYPE type1 IS TABLE OF u_dw_data.dw_date.DATE_KEY%TYPE;
+    date_key type1;
+    TYPE type2 IS TABLE OF u_dw_data.dw_date.DATE_FULL_NUMBER%TYPE;
+    date_full_number type2;
+    TYPE type3 IS TABLE OF u_dw_data.dw_date.DATE_FULL_STRING%TYPE;
+    date_full_string type3;
+    TYPE type4 IS TABLE OF u_dw_data.dw_date.DATE_WEEKDAY_FL%TYPE;
+    date_weekday_fl type4;
+    TYPE type5 IS TABLE OF u_dw_data.dw_date.DATE_US_CIVIL_HOLIDAY_FL%TYPE;
+    date_us_civil_holiday_fl type5;
+    TYPE type6 IS TABLE OF u_dw_data.dw_date.DATE_LAST_DAY_OF_WEEK_FL%TYPE;
+    date_last_day_of_week_fl type6;
+    TYPE type7 IS TABLE OF u_dw_data.dw_date.DATE_LAST_DAY_OF_MONTH_FL%TYPE;
+    date_last_day_of_month_fl type7;
+    TYPE type8 IS TABLE OF u_dw_data.dw_date.DATE_LAST_DAY_OF_QTR_FL%TYPE;
+    date_last_day_of_qtr_fl type8;
+    TYPE type9 IS TABLE OF u_dw_data.dw_date.DATE_LAST_DAY_OF_YR_FL%TYPE;
+    date_last_day_of_yr_fl type9;
+    TYPE type10 IS TABLE OF u_dw_data.dw_date.DATE_DAY_OF_WEEK_NAME%TYPE;
+    date_day_of_week_name type10;
+    TYPE type11 IS TABLE OF u_dw_data.dw_date.DATE_DAY_OF_WEEK_ABBR%TYPE;
+    date_day_of_week_abbr type11;
+    TYPE type12 IS TABLE OF u_dw_data.dw_date.DATE_MONTH_NAME%TYPE;
+    date_month_name type12;
+    TYPE type13 IS TABLE OF u_dw_data.dw_date.DATE_MONTH_NAME_ABBR%TYPE;
+    date_month_name_abbr type13;
+    TYPE type14 IS TABLE OF u_dw_data.dw_date.DATE_DAY_NUMBER_OF_WEEK%TYPE;
+    date_day_number_of_week type14;
+    TYPE type15 IS TABLE OF u_dw_data.dw_date.DATE_DAY_NUMBER_OF_MONTH%TYPE;
+    date_day_number_of_month type15;
+    TYPE type16 IS TABLE OF u_dw_data.dw_date.DATE_DAY_NUMBER_OF_QTR%TYPE;
+    date_day_number_of_qtr type16;
+    TYPE type17 IS TABLE OF u_dw_data.dw_date.DATE_DAY_NUMBER_OF_YR%TYPE;
+    date_day_number_of_yr type17;
+    TYPE type18 IS TABLE OF u_dw_data.dw_date.DATE_WEEK_NUMBER_OF_MONTH%TYPE;
+    date_week_number_of_month type18;
+    TYPE type19 IS TABLE OF u_dw_data.dw_date.DATE_WEEK_NUMBER_OF_QTR%TYPE;
+    date_week_number_of_qtr type19;
+    TYPE type20 IS TABLE OF u_dw_data.dw_date.DATE_WEEK_NUMBER_OF_YR%TYPE;
+    date_week_number_of_yr type20;
+    TYPE type21 IS TABLE OF u_dw_data.dw_date.DATE_MONTH_NUMBER_OF_YR%TYPE;
+    date_month_number_of_yr type21;
+    TYPE type22 IS TABLE OF u_dw_data.dw_date.DATE_QTR_NUMBER_OF_YR%TYPE;
+    date_qtr_number_of_yr type22;
+    TYPE type23 IS TABLE OF u_dw_data.dw_date.DATE_YEAR_NUMBER%TYPE;
+    date_year_number type23;
+    TYPE type24 IS TABLE OF u_dw_data.dw_date.DATE_WEEK_BEGIN_DT%TYPE;
+    date_week_begin_dt type24;
+    TYPE type25 IS TABLE OF u_dw_data.dw_date.DATE_WEEK_END_DT%TYPE;
+    date_week_end_dt type25;
+    TYPE type26 IS TABLE OF u_dw_data.dw_date.DATE_MONTH_BEGIN_DT%TYPE;
+    date_month_begin_dt type26;
+    TYPE type27 IS TABLE OF u_dw_data.dw_date.DATE_MONTH_END_DT%TYPE;
+    date_month_end_dt type27;
+    TYPE type28 IS TABLE OF u_dw_data.dw_date.DATE_QTR_BEGIN_DT%TYPE;
+    date_qtr_begin_dt type28;
+    TYPE type29 IS TABLE OF u_dw_data.dw_date.DATE_QTR_END_DT%TYPE;
+    date_qtr_end_dt type29;
+    TYPE type30 IS TABLE OF u_dw_data.dw_date.DATE_YR_BEGIN_DT%TYPE;
+    date_yr_begin_dt type30;
+    TYPE type31 IS TABLE OF u_dw_data.dw_date.DATE_YR_END_DT%TYPE;
+    date_yr_end_dt type31;
+    
+    PROCEDURE load_date;
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY sa_DW_CL.pkg_etl_dim_date_dw AS
+   PROCEDURE load_date 
+   IS  
+    BEGIN
+                OPEN cur;
+                
+                FETCH cur BULK COLLECT INTO date_key, date_full_number, date_full_string, date_weekday_fl, date_US_CIVIL_HOLIDAY_FL,
+                                                   date_last_day_of_week_fl,
+            date_last_day_of_month_FL, date_last_day_of_qtr_fl, date_last_day_of_yr_fl, date_day_of_week_name, date_day_of_week_abbr,
+            date_month_name, date_month_name_abbr, date_day_number_of_week, date_day_number_of_month, date_day_number_of_qtr, date_day_number_of_yr,
+            date_week_number_of_month, date_week_number_of_qtr, date_week_number_of_yr, date_month_number_of_yr, date_qtr_number_of_yr, DATE_YEAR_NUMBER, date_week_begin_dt, date_week_end_dt,/* month_id, month_desc,*/ 
+             date_month_begin_dt, date_month_end_dt,
+             date_qtr_begin_dt, date_qtr_end_dt,  date_yr_begin_dt, date_yr_end_dt;
+                
+                FORALL i in date_key.FIRST .. date_key.LAST
+                INSERT INTO u_dw_data.dw_date VALUES(date_key(i), date_full_number(i), date_full_string(i),
+                date_weekday_fl(i), date_us_civil_holiday_fl(i), date_last_day_of_week_fl(i),
+                 date_last_day_of_month_fl(i), date_last_day_of_qtr_fl(i), date_last_day_of_yr_fl(i),
+                 date_day_of_week_name(i), date_day_of_week_abbr(i), date_month_name(i),
+                 date_month_name_abbr(i), date_day_number_of_week(i), date_day_number_of_month(i),
+                 date_day_number_of_qtr(i), date_day_number_of_yr(i), date_week_number_of_month(i),
+                 date_week_number_of_qtr(i), date_week_number_of_yr(i), date_month_number_of_yr(i),
+                 date_qtr_number_of_yr(i), date_year_number(i), date_week_begin_dt(i), date_week_end_dt(i),
+                 date_month_begin_dt(i), date_month_end_dt(i), date_qtr_begin_dt(i), date_qtr_end_dt(i),
+                 date_yr_begin_dt(i), date_yr_end_dt(i));
+                
+                CLOSE CUR; 
+                
+    END load_date;
+END;
+/
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+create table TS_SA_DATA_01_USER.SA_geo_locations (
+   COUNTRY_GEO_ID      NUMBER                not null,
+   GEO_COUNTRY_ID       NUMBER                not null,
+   GEO_COUNTRY_CODE_A2  VARCHAR2(128)         not null,
+   GEO_COUNTRY_CODE_A3  VARCHAR2(128)         not null,
+   GEO_COUNTRY_DESC     VARCHAR2(128)         not null,
+   REGION_GEO_ID        NUMBER                not null,
+   GEO_REGION_ID        NUMBER                not null,
+   GEO_REGION_CODE      VARCHAR2(128)         not null,
+   GEO_REGION_DESC      VARCHAR2(128)         not null,
+   CONTENET_GEO_ID      NUMBER                not null,
+   GEO_PART_ID          NUMBER                not null,
+   GEO_PART_CODE        VARCHAR2(128)         not null,
+   GEO_PART_DESC        VARCHAR2(128)         not null,
+   SYSTEM_GEO_ID        NUMBER                not null,
+   GEO_SYSTEM_ID        NUMBER                not null,
+   GEO_SYSTEM_CODE      VARCHAR2(128)         not null,
+   GEO_SYSTEM_DESC      VARCHAR2(128)         not null,
+   constraint PK_SA_GEO_LOCATIONS primary key (COUNTRY_GEO_ID)
+)
+tablespace ts_SA_STORAGE_LEVEL;
+
+
+grant all on TS_SA_DATA_01_USER.sa_geo_locations to sa_DW_CL;
+
+
+CREATE OR REPLACE PACKAGE sa_DW_CL.pkg_cleansing_load_ref_geo_locations
+AS  
+    TYPE type1 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.COUNTRY_GEO_ID%TYPE;
+    country_geo_id_arr type1;
+    TYPE type2 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_COUNTRY_ID%TYPE;
+    geo_country_id_arr type2;
+    TYPE type3 IS TABLE OF ts_sa_data_01_user.sa_geo_locations.GEO_COUNTRY_CODE_A2%TYPE;
+    geo_country_code_a2_arr type3;
+    TYPE type4 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_COUNTRY_CODE_A3%TYPE;
+    geo_country_code_a3_arr type4;
+    TYPE type5 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_COUNTRY_DESC%TYPE;
+    geo_country_desc_arr type5;
+    TYPE type6 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.REGION_GEO_ID%TYPE;
+    region_geo_id_arr type6;
+    TYPE type7 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_REGION_ID%TYPE;
+    geo_region_id_arr type7;
+    TYPE type8 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_REGION_CODE%TYPE;
+    geo_region_code_arr type8;
+    TYPE type9 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_REGION_DESC%TYPE;
+    geo_region_desc_arr type9;
+    TYPE type10 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.CONTENET_GEO_ID%TYPE;
+    contenet_geo_id_arr type10;
+    TYPE type11 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_PART_ID%TYPE;
+    geo_part_id_arr type11;
+    TYPE type12 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_PART_CODE%TYPE;
+    geo_part_code_arr type12;
+    TYPE type13 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_PART_DESC%TYPE;
+    geo_part_desc_arr type13;
+    TYPE type14 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.SYSTEM_GEO_ID%TYPE;
+    system_geo_id_arr type14;
+    TYPE type15 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_SYSTEM_ID%TYPE;
+    geo_system_id_arr type15;
+    TYPE type16 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_SYSTEM_CODE%TYPE;
+    geo_system_code_arr type16;
+    TYPE type17 IS TABLE OF TS_SA_DATA_01_USER.sa_geo_locations.GEO_SYSTEM_DESC%TYPE;
+    geo_system_desc_arr type17;
+    
+    PROCEDURE load_geo_locations;
+END;
+
+
+
+CREATE OR REPLACE PACKAGE BODY sa_dw_cl.pkg_cleansing_load_ref_geo_locations AS
+   PROCEDURE load_geo_locations
+   AS  
+    BEGIN
+        DECLARE
+        TYPE type_cur IS REF CURSOR;
+        cur type_cur;
+        BEGIN
+        OPEN cur FOR SELECT * FROM ts_sa_data_01_user.sa_geo_locations;
+                
+                FETCH cur BULK COLLECT INTO country_geo_id_arr,  geo_country_id_arr, geo_country_code_a2_arr,
+                geo_country_code_a3_arr, geo_country_desc_arr, 
+                region_geo_id_arr, geo_region_id_arr, geo_region_code_arr,
+                geo_region_desc_arr, contenet_geo_id_arr, geo_part_id_arr,
+                geo_part_code_arr, geo_part_desc_arr, system_geo_id_arr, geo_system_id_arr, 
+                geo_system_code_arr, geo_system_desc_arr;
+                
+                FORALL i IN country_geo_id_arr.FIRST .. country_geo_id_arr.LAST 
+                insert into u_dw_data.DW_GEO_LOCATIONS VALUES (country_geo_id_arr(i),  geo_country_id_arr(i), geo_country_code_a2_arr(i),
+                geo_country_code_a3_arr(i), geo_country_desc_arr(i), 
+                region_geo_id_arr(i), geo_region_id_arr(i), geo_region_code_arr(i),
+                geo_region_desc_arr(i), contenet_geo_id_arr(i), geo_part_id_arr(i),
+                geo_part_code_arr(i), geo_part_desc_arr(i), system_geo_id_arr(i), geo_system_id_arr(i), 
+                geo_system_code_arr(i), geo_system_desc_arr(i)/*, (SELECT CURRENT_DATE FROM DUAL),(SELECT CURRENT_DATE FROM DUAL)*/);
+                
+        CLOSE cur; 
+        END;         
+    END load_geo_locations;
+END;
+/
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE sa_DW_CL.pkg_cleansing_load_ref_gen_periods
+AS
+   PROCEDURE load_gen_periods;
+END;
+/
+
+grant all on u_dw_data.DW_GEN_PERIOD to sa_DW_CL;
+  
+CREATE OR REPLACE PACKAGE BODY sa_DW_CL.pkg_cleansing_load_ref_gen_periods
+
+AS
+   PROCEDURE load_gen_periods
+   AS
+   BEGIN
+      MERGE INTO u_dw_data.DW_GEN_PERIOD target
+           USING (SELECT * FROM TS_SA_DATA_01_USER.SA_GEN_PERIOD) source
+              ON (target.period_id = source.period_id)
+      WHEN NOT MATCHED THEN
+         INSERT (period_id, period_sur_id, start_amount, end_amount, insert_dt, update_dt)
+             VALUES (source.period_id, source.period_sur_id, source.start_amount, source.end_amount
+             , (select CURRENT_DATE from DUAL)
+             , (select CURRENT_DATE from DUAL))
+      WHEN MATCHED THEN
+         UPDATE SET target.period_sur_id = source.period_sur_id, target.start_amount = source.start_amount
+         , target.end_amount = source.end_amount
+         , target.update_dt = (select CURRENT_DATE from dual);
+
+      --Commit Resulst
+      COMMIT;
+   END load_gen_periods;
+END;
+/
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE sa_dw_cl.pkg_etl_dim_activity_dw
+AS
+    CURSOR curs IS SELECT activities_id FROM ts_sa_data_01_user.sa_activity;
+    I   NUMBER;
+    X   NUMBER;
+    y   NUMBER;
+    z   NUMBER;
+    xxx NUMBER;
+    PROCEDURE load_activity;
+END;
+
+
+CREATE OR REPLACE PACKAGE BODY sa_dw_cl.pkg_etl_dim_activity_dw AS
+
+   PROCEDURE load_activity
+   IS
+        BEGIN
+        IF curs %ISOPEN THEN
+        CLOSE curs ;
+        END IF;
+        OPEN curs;
+        LOOP
+            BEGIN
+             FETCH curs INTO  I; 
+              EXIT WHEN curs%NOTFOUND;  
+            SELECT activities_id   INTO X FROM  u_dw_data.dw_activity_scd WHERE activity_sur_id = I;
+            SELECT activity_code INTO y FROM ts_sa_data_01_user.sa_activity        WHERE activities_id = I;
+            SELECT activity_code INTO z FROM u_dw_data.dw_activity_scd  WHERE activity_sur_id = I;
+                IF y = z THEN
+                UPDATE u_dw_data.dw_activity_scd
+                   SET u_dw_data.dw_activity_scd.activity_sur_id  = (SELECT activity_desc      FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.activity_desc  = (SELECT activity_desc      FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.activity_code  = (SELECT activity_code      FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.cnt_activity   = (SELECT cnt_activity    FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_insurance = (SELECT type_of_insurance  FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_insurance_id   = (SELECT type_of_insurance_id    FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_object = (SELECT type_of_object  FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_object_id = (SELECT type_of_object_id  FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.update_dt     = (SELECT CURRENT_DATE   FROM DUAL),
+                    u_dw_data.dw_activity_scd.inserte_dt     = (SELECT CURRENT_DATE   FROM DUAL),
+                WHERE u_dw_data.dw_activity_scd.activities_id  = I ;
+                ELSE
+                        
+                        
+                SELECT MIN(activity_sur_id) INTO xxx  FROM u_dw_data.dw_activity_scd;   
+                
+                UPDATE u_dw_data.dw_activity_scd
+                SET 
+                    u_dw_data.dw_activity_scd.activity_sur_id     = (xxx - 1),
+                    u_dw_data.dw_activity_scd.activity_desc        = (SELECT activity_desc     FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.activity_code      = (SELECT activity_code   FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.cnt_activity    = (SELECT cnt_activity FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_insurance      = (SELECT type_of_insurance   FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_insurance_id    = (SELECT type_of_insurance_id FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_object    = (SELECT type_of_object FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.type_of_object_id    = (SELECT type_of_object_id FROM ts_sa_data_01_user.sa_activity  WHERE activities_id = I),
+                    u_dw_data.dw_activity_scd.update_dt        = (SELECT CURRENT_DATE  FROM DUAL),
+                    u_dw_data.dw_activity_scd.inserte_dt        = (SELECT CURRENT_DATE  FROM DUAL),
+                WHERE u_dw_data.dw_activity_scd.activities_id = I AND u_dw_data.dw_activity_scd.activity_code = z;
+                
+                
+                INSERT INTO u_dw_data.dw_activity_scd(activities_id, activity_sur_id, activity_desc, activity_code, CNT_ACTIVITY, TYPE_OF_INSURANCE, TYPE_OF_INSURANCE_id, TYPE_OF_OBJECT, TYPE_OF_OBJECT_ID, insert_dt, update_dt)
+                VALUES (I
+                        , I  
+                        , (SELECT activity_sur_id     FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT activity_desc     FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT activity_code     FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT CURRENT_DATE  FROM DUAL)
+                        , (SELECT CURRENT_DATE  FROM DUAL)
+                        , 1
+                        , (SELECT cnt_activity   FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_INSURANCE FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_INSURANCE_id FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_OBJECT   FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_OBJECT_id FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT CURRENT_DATE  FROM DUAL)
+                        , (SELECT CURRENT_DATE  FROM DUAL));
+                END IF;
+            EXCEPTION WHEN NO_DATA_FOUND THEN
+                INSERT INTO u_dw_data.dw_activity_scd(activities_id
+                                                         , activity_sur_id
+                                                         , activity_desc
+                                                         , activity_code
+                                                         , cnt_activity
+                                                         , type_of_insurance
+                                                         , type_of_insurance_id
+                                                         , type_of_object
+                                                         , type_of_object_id
+                                                         , insert_dt
+                                                         , update_dt) 
+                VALUES (I
+                        , I 
+                        , (SELECT activity_sur_id     FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT activity_desc     FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT activity_code     FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT CURRENT_DATE  FROM DUAL)
+                        , (SELECT CURRENT_DATE  FROM DUAL)
+                        , 1
+                        , (SELECT cnt_activity   FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_INSURANCE FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_INSURANCE_id FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_OBJECT   FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT TYPE_OF_OBJECT_id FROM TS_SA_DATA_01_USER.sa_activity  WHERE activities_id = I)
+                        , (SELECT CURRENT_DATE  FROM DUAL)
+                        , (SELECT CURRENT_DATE  FROM DUAL));
+            END;
+        END LOOP;
+        COMMIT;	
+        
+        CLOSE curs;
+        
+
+   END load_activity;
+END;
+/
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+  DROP table U_dw_data.dw_FCT_sale_DD
+  create table U_dw_data.dw_FCT_sale_DD 
+(
+   sale_id             date                           not null,
+   activity_SUR_id         number                         not null, 
+   date_id              number                         not null,
+   agent_id         number                         not null, 
+   period_id         number                         not null,
+   territory_id         number                         not null,
+   client_id         number                         not null, 
+   sale_cost         number                         not null, 
+   sale_desc         number                         not null,   
+   update_dt            date                           not null,
+   insert_dt            date                           not null
+)
+tablespace ts_dw_data_01;--ts_SA_STORAGE_LEVEL;----
+commit;
+  CREATE OR REPLACE PACKAGE SA_dw_cl.pkg_etl_dim_sales_dw
+AS
+    PROCEDURE load_sales;
+END;
+
+
+CREATE OR REPLACE PACKAGE BODY SA_DW_CL.pkg_etl_dim_sales_dw
+
+AS
+   PROCEDURE load_sales
+   AS
+   BEGIN
+      MERGE INTO U_dw_data.dw_FCT_sale_DD target
+           USING (SELECT * FROM TS_SA_DATA_01_USER.FCT_SALE_DD ) source
+              ON ( target.sale_id = source.sale_id)
+      WHEN NOT MATCHED THEN
+         INSERT (sale_id
+                , ACTIVITY_SUR_id
+                , date_id
+                , AGENT_id
+                , PERIOD_id
+                , TERRITORY_id                
+                , CLIENT_id
+                , SALE_COST
+                , SALE_DESC
+                , UPDATE_D
+                , insert_dt)
+         VALUES (source.sale_id
+                , source.ACTIVITY_id
+                , source.DATE_KEY
+                , source.AGENT_id
+                , source.PERIOD_id
+                , source.date_key
+                , source.COUNTRY_GEO_id
+                , source.CLIENT_ID
+                , source.sale_COST
+                , source.SALE_DESC
+                , (select CURRENT_DATE from DUAL)
+                , (select CURRENT_DATE from DUAL))
+      WHEN MATCHED THEN
+         UPDATE 
+            SET target.SALE_id=source.SALE_id
+                , target.ACTIVITY_surr_id=source.ACTIVITY_id
+                , target.DATE_id=source.DATE_KEY
+                , target.AGENT_id=source.AGENT_id
+                , target.PERIOD_id=source.PERIOD_id
+                , target.date_id=source.date_key                
+                , target.TERRITORY_ID=source.COUNTRY_GEO_ID
+                , target.CLIENT_ID=source.CLIENT_ID
+                , target.SALE_COST=source.SALE_COST
+                , target.SALE_DESC=source.SALE_DESC
+                , target.insert_dt= (select CURRENT_DATE from dual)
+                , target.event_dt= (select CURRENT_DATE from dual);
+
+      --Commit Resulst
+      COMMIT;
+   END load_sales;
+END;
+/
+
+
+
